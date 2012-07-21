@@ -2,10 +2,34 @@
 
 from twisted.internet import defer
 from twisted.internet import reactor
-from twisted.internet.protocol import Protocol, ClientFactory
+from twisted.internet.protocol import Protocol, ClientFactory, ServerFactory
 from twisted.protocols.basic import NetstringReceiver
 from twisted.internet.defer import Deferred, succeed, inlineCallbacks
 
+
+class DownloadVideoServerProtocol(NetstringReceiver):
+    """ The protocol to download a video from
+    a short URL and store it locally.
+    """
+
+    def stringReceived(self, shortUrl):
+        self.transport.loseConnection()
+
+        self.downloadVideoFromShortUrlAsync(shortUrl)
+
+    @inlineCallbacks
+    def downloadVideoFromShortUrlAsync(self, shortUrl):
+        url = yield transformShortUrlAsync(shortUrl)
+        print "long url:", url
+        video = yield downloadVideoFromUrlAsync(url)
+        print "video file:", video
+        storeVideo(video)
+
+
+class DownloadVideoServerFactory(ServerFactory):
+    
+    protocol = DownloadVideoServerProtocol
+        
 
 class ShortUrlClientProtocol(NetstringReceiver):
     """ The protocol to transform a short URL
@@ -72,22 +96,15 @@ def downloadVideoFromUrlAsync(url):
 def storeVideo(video):
     pass
 
-@inlineCallbacks
-def downloadVideoFromShortUrl(shortUrl):
-    url = yield transformShortUrlAsync(shortUrl)
-    print "long url:", url
-    video = yield downloadVideoFromUrlAsync(url)
-    print "video file:", video
-    storeVideo(video)
-
 def startDownloadService():
     while True:
         shortUrl = getShortUrl()
         if shortUrl is None:
             break
 
-        downloadVideoFromShortUrl(shortUrl)
+        downloadVideoFromShortUrlAsync(shortUrl)
 
 if __name__ == '__main__':
-    startDownloadService()
+    port = reactor.listenTCP(62222, DownloadVideoServerFactory())
+    print "Download Video Server running at port", 62222
     reactor.run()
