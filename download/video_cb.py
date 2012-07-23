@@ -17,14 +17,15 @@ class DownloadVideoServerProtocol(NetstringReceiver):
 
         self.downloadVideoFromShortUrlAsync(shortUrl)
 
-    @inlineCallbacks
     def downloadVideoFromShortUrlAsync(self, shortUrl):
-        url = yield transformShortUrlAsync(shortUrl)
-        print "long url:", url
-        video = yield downloadVideoFromUrlAsync(url)
-        print "video file:", video
-        storeVideo(video)
+        d = transformShortUrlAsync(shortUrl)
 
+        def downloadVideoFromUrl(url):
+            print "long url:", url
+            d = downloadVideoFromUrlAsync(url)
+            d.addCallback(storeVideo)
+        
+        d.addCallback(downloadVideoFromUrl)
 
 class DownloadVideoServerFactory(ServerFactory):
     
