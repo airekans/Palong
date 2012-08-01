@@ -15,7 +15,6 @@ class DownloadVideoServerProtocol(NetstringReceiver):
 
     def stringReceived(self, shortUrl):
         self.transport.loseConnection()
-
         self.downloadVideoFromShortUrlAsync(shortUrl)
 
     @inlineCallbacks

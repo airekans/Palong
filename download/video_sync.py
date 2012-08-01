@@ -8,17 +8,35 @@ import socket
 import struct
 
 
+def getNetString(netstring):
+    first_nets , sep, rest = netstring.partition(",")
+    if sep == "":
+        raise BaseException("invalid short url: %s" % netstring)
+
+    num, sep, s = first_nets.partition(":")
+    num = int(num)
+    if sep == "":
+        raise BaseException("invalid short url: %s" % netstring)
+
+    if num != len(s):
+        raise BaseException("invalid short url: %s" % netstring)
+
+    return s
+        
+
 def transformShortUrl(shortUrl):
+    if len(shortUrl) % 2 == 1:
+        time.sleep(2)
+        raise BaseException("invalid short url: %s" % shortUrl)
+
     sock = socket.socket()
     sock.connect(('localhost', 63333))
     
-    # data = struct.pack('!i', len(shortUrl))
-    # data += ":" + shortUrl + ","
     data = "%d:%s," % (len(shortUrl), shortUrl)
-    print "send data:", data
     sock.sendall(data)
 
-    url = sock.recv(1024)
+    netstring = sock.recv(1024)
+    url = getNetString(netstring)
     print "recv url:", url
     return url
 
