@@ -3,7 +3,6 @@
 from twisted.internet import reactor
 from twisted.internet.protocol import Protocol, ClientFactory, ServerFactory
 from twisted.protocols.basic import NetstringReceiver
-import time
 
 class ShortUrlServerProtocol(NetstringReceiver):
     """ The protocol to transform a short URL
@@ -11,14 +10,13 @@ class ShortUrlServerProtocol(NetstringReceiver):
     """
 
     def stringReceived(self, url):
-        self.sendString(self.transformShortUrl(url))
-        self.transport.loseConnection()
+        # simulate the processing time delay
+        reactor.callLater(2, lambda: self.transformShortUrl(url))
 
     def transformShortUrl(self, shortUrl):
         print "recv url: ", shortUrl
-        # simulate the processing time delay
-        time.sleep(2)
-        return "http://www.youku.com/index.mp4"
+        self.sendString("http://www.youku.com/index.mp4")
+        self.transport.loseConnection()
 
 
 class ShortUrlServerFactory(ServerFactory):
