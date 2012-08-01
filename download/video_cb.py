@@ -12,6 +12,12 @@ class DownloadVideoServerProtocol(NetstringReceiver):
     """ The protocol to download a video from
     a short URL and store it locally.
     """
+    
+    count = 0
+    
+    def __init__(self, *args, **argd):
+        DownloadVideoServerProtocol.count += 1
+        self.__count = DownloadVideoServerProtocol.count
 
     def stringReceived(self, shortUrl):
         self.transport.loseConnection()
@@ -21,18 +27,20 @@ class DownloadVideoServerProtocol(NetstringReceiver):
         d = transformShortUrlAsync(shortUrl)
 
         def downloadVideoFromUrl(url):
-            print "long url:", url
             d = downloadVideoFromUrlAsync(url)
 
             def errDownloadVideoFromUrl(err):
-                print "exception:", err
+                print "[%d] exception:" % self.__count, err
             
-            d.addCallbacks(storeVideo, errDownloadVideoFromUrl)
+            d.addCallbacks(lambda v: self.storeVideo(v), errDownloadVideoFromUrl)
 
         def errTransformShortUrl(err):
-            print "exception:", err
+            print "[%d] exception:" % self.__count, err
             
         d.addCallbacks(downloadVideoFromUrl, errTransformShortUrl)
+        
+    def storeVideo(self, video):
+        print "[%d] store" % self.__count, video
 
 class DownloadVideoServerFactory(ServerFactory):
     
